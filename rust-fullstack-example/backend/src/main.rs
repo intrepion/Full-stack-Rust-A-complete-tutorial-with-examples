@@ -1,3 +1,12 @@
+use mobc::{Connection, Pool};
+use mobc_postgres::{tokio_postgres, PgConnectionManager};
+use std::convert::Infallible;
+use tokio_postgres::NoTls;
+use warp::{
+    http::{header, Method},
+    Filter, Rejection,
+};
+
 mod db;
 mod error;
 mod handler;
@@ -13,7 +22,7 @@ async fn main() {
     db::init_db(&db_pool)
         .await
         .expect("database can be initialized");
-    
+
     let pet = warp::path!("owner" / i32 / "pet");
     let pet_param = warp::path!("owner" / i32 / "pet" / i32);
     let owner = warp::path("owner");
@@ -31,7 +40,7 @@ async fn main() {
             .and(warp::delete())
             .and(with_db(db_pool.clone()))
             .and_then(handler::delete_pet_handler));
-    
+
     let owner_routes = owner
         .and(warp::get())
         .and(warp::path::param())
@@ -51,7 +60,7 @@ async fn main() {
         .or(owner_routes)
         .recover(error::handle_rejection)
         .with(
-            warp:cors()
+            warp::cors()
                 .allow_credentials(true)
                 .allow_methods(&[
                     Method::OPTIONS,
@@ -65,7 +74,7 @@ async fn main() {
                 .max_age(300)
                 .allow_any_origin(),
         );
-    
+
     warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
 }
 

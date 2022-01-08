@@ -1,3 +1,8 @@
+use super::{get_db_con, Result};
+use crate::{error::Error::*, DBPool};
+use common::*;
+use mobc_postgres::tokio_postgres::Row;
+
 pub const TABLE: &str = "owner";
 const SELECT_FIELDS: &str = "id, name";
 
@@ -14,7 +19,7 @@ pub async fn fetch_one(db_pool: &DBPool, id: i32) -> Result<Owner> {
     let query = format!("SELECT {} FROM {} WHERE id = $1", SELECT_FIELDS, TABLE);
 
     let row = con
-        .query_one(query.as_str(). &[&id])
+        .query_one(query.as_str(), &[&id])
         .await
         .map_err(DBQueryError)?;
     Ok(row_to_owner(&row))
